@@ -1,23 +1,49 @@
-import logo from './logo.svg';
 import './App.css';
+import Home from './Home';
+import GoogleSignInPage from './GoogleSignInPage';
+import  { BrowserRouter as Router ,Route, Switch } from 'react-router-dom';
+import { auth, db } from './firebase';
+import {useAuthState} from 'react-firebase-hooks/auth';
+import { useEffect } from 'react';
 
 function App() {
+
+  const [user] =useAuthState(auth);
+
+  useEffect(() => {
+    if(user && auth){
+        db.collection('users').doc(user?.id).set({
+        accoutType:"normal",
+        userId:user?.uid,
+        name:user?.displayName,
+        email:user?.email,
+        profilePic:user?.photoURL,
+        phone:user?.phoneNumber,
+    })
+    } 
+  },[user])
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <Router>
+        {
+          !user?(
+            <GoogleSignInPage/>
+          )
+          :(
+             <Switch>
+                <Home/>
+                <Route path="/home">
+                  <Home/>
+                </Route>
+                <Route path="/signIn">
+                  <GoogleSignInPage/>
+                </Route>
+            </Switch>
+          )
+        }
+      </Router>
+      
     </div>
   );
 }
